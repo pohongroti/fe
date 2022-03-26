@@ -1,0 +1,47 @@
+/* Ini Page Tata Rias Halaman/CSS TemplatePresensiMasuk.css */
+
+
+/* Ini untuk Form Presensi Masuk */
+body{
+    background-color:darkgray;
+}
+
+.container{
+    background-color:grey;
+    margin:0 auto;
+    width: 550px;
+    height: 650px;
+    border:1px solid grey;
+    padding: 10px;
+}
+
+.logo{
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo img{
+    align-self: center;
+    padding: 5px;
+}
+
+.input{
+    padding: 5px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.button-full{
+    width: 100%;
+    background-color: whitesmoke;
+    color: black;
+    font-size: 14px;
+}
+#map{
+    width: 100%;
+    height: 200px;
+}
+
+
+

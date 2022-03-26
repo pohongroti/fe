@@ -1,0 +1,26 @@
+/* Ini Page Tata Rias Halaman/CSS TemplateBeranda.css */
+
+/* Ini untuk Form Beranda */
+body{
+    background-color:grey;
+}
+
+.container{
+    background-color:lavender;
+    margin:0 auto;
+    width: 550px; /*ini lebar kanan-kiri*/
+    height: 555px; /*ini tinggi atas-bawah*/
+    border:1px black;
+    padding: 10px;
+}
+
+.logo {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo img{
+    align-self: center;  
+    padding: 5px;
+}

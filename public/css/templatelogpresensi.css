@@ -1,0 +1,95 @@
+/* Ini Page Tata Rias Halaman/CSS TemplateLaporanPresensi.css */
+
+/* Ini untuk Form Laporan Presensi  */
+body{
+    background-color:grey;
+}
+
+.container-top{
+    background-color:cornsilk;
+    margin:0 auto;
+    width: 1300px; /*ini lebar kanan-kiri*/
+    height: 40px; /*ini tinggi atas-bawah*/
+    border:1px black;
+    padding: 10px;
+}
+
+.container-header{
+    background-color:lavender;
+    margin:0 auto;
+    width: 1300px; /*ini lebar kanan-kiri*/
+    height: 150px; /*ini tinggi atas-bawah*/
+    border:1px black;
+    padding: 10px;
+}
+
+.logo {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo img{
+    align-self: center;  
+    padding: 5px;
+}
+
+.container-content{
+    background-color:burlywood;
+    margin:0 auto;
+    width: 1300px; /*ini lebar kanan-kiri*/
+    height: 30px; /*ini tinggi atas-bawah*/
+    border:1px black;
+    padding: 10px;
+    text-align: center;
+}
+
+.container-footer{
+    background-color:chocolate;
+    margin:0 auto;
+    width: 1300px; /*ini lebar kanan-kiri*/
+    height: 110px; /*ini tinggi atas-bawah*/
+    border:1px black;
+    padding: 10px;
+    text-align: center;
+}
+
+.headertabelfooter{
+    text-align: right;
+}
+
+.bodytabelfooter{
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.borderbeforebottom{
+    background-color:darkgray;
+    margin:0 auto;
+    width: 1300px; /*ini lebar kanan-kiri*/
+    height: 10px; /*ini tinggi atas-bawah*/
+    border:1px black;
+    padding: 10px;
+    text-align: center;
+}
+
+.container-bottom{
+    background-color:coral;
+    margin:0 auto;
+    width: 1300px; /*ini lebar kanan-kiri*/
+    height: 110px; /*ini tinggi atas-bawah*/
+    border:1px black;
+    padding: 10px;
+    text-align: center;
+}
+
+.headertabelbottom{
+    text-align: right;
+}
+
+.bodytabelbottom{
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+}

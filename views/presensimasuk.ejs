@@ -1,0 +1,317 @@
+<!-- Ini Page PresensiMasuk.ejs -->
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Presensi Masuk</title>
+        <!-- <link rel="stylesheet" href="/user/css/templatepresensi.css"/> -->
+        <!--Import Library/API Maps Mapboxgl-->
+        <script src='https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js'></script>
+        <link href='https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css' rel='stylesheet' />
+        <!-- Library untuk menghitung jarak antar koordinat-->
+        <script src="https://npmcdn.com/@turf/turf@5.1.6/turf.min.js"></script>
+
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@latest/dist/browser-image-compression.js"></script>
+        <style>
+            #map{
+                    width: 100%;
+                    height: 200px;
+                    }
+        </style>
+    </head>
+    <body>
+        <%- include('partials/navbar.ejs') %>
+        <main style="margin: 16px;">
+            <form action="/user/addpresensimasuk" method="POST">
+                <h1>Presensi Masuk</h1>
+                <% if(pegawai.length!=0){ 
+                    var i = 1;
+                    pegawai.forEach(function(dataout){
+                    %>
+                    <div class="mb-3">
+                        <label for="exampleFormControlInput1" class="form-label">Nama</label>
+                        <input type="text" class="form-control" value="<%= dataout.namapegawai %>" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleFormControlInput1" class="form-label">Jabatan</label>
+                        <input type="text" class="form-control" value="<%= dataout.jabatanpegawai %>" readonly />
+                    </div>
+                <% i++; })} %>
+                <div class="mb-3">
+                    <label for="exampleFormControlInput1" class="form-label" style="display: block;">Sistem Kerja</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" value="WFH" name="sistemkerja" type="radio">
+                        <label class="form-check-label" for="inlineRadio1">WFH</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" value="WFO" name="sistemkerja" type="radio" checked="checked">
+                        <label class="form-check-label" for="inlineRadio2">WFO</label>
+                        </div>
+                </div>
+                <div class="mb-3">
+                    <label for="exampleFormControlInput1" class="form-label" style="display: block;">Hari</label>
+                    <span class="fw-light" id="tglwaktuin"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="exampleFormControlInput1" class="form-label">Upload Photo</label>
+                    <input class="form-control mb-3" id="uploadFoto" type="file" accept="image/*" />
+                    <input class="form-control mb-3" id="foto" name="foto" hidden="active" />
+                    <img alt='photo' style="width: 100%; display: none; max-width: 500px;" id="previewFoto" />
+                </div>
+                <div class="mb-3">
+                    <label for="exampleFormControlInput1" class="form-label" style="display: block;">Lokasi Sekolah</label>
+                    <div id="map" class="form-control"></div>
+                </div>
+                <div class="mb-3">
+                    <label for="exampleFormControlInput1" class="form-label" style="display: block;">Titik Longitude</label>
+                    <input id="longitude" name="longitude" type="text" class="form-control" readonly />
+                    <label for="exampleFormControlInput1" class="form-label" style="display: block;">Titik Latitude</label>
+                    <input id="latitude" name="latitude" type="text" class="form-control" readonly />
+                </div>
+                <input id="namaSekolah" type="text" value="<%= pengaturanData.namalokasi %>" hidden="active">
+                <input id="longitudeSekolah" type="text" value="<%= pengaturanData.longitude %>" hidden="active">
+                <input id="latitudeSekolah" type="text" value="<%= pengaturanData.latitude %>" hidden="active">
+                <input id="jarakPresensiSekolah" type="text" value="<%= pengaturanData.jarak_presensi %>" hidden="active">
+                <button class="mb-3 w-100 btn btn-lg btn-primary" type="submit">PRESENSI</button>
+            </form>
+        </main>
+       <body>
+           
+        <script>
+            const inputUploadFoto = document.querySelector('#uploadFoto');
+            const inputFoto = document.querySelector('#foto');
+            const previewFoto = document.querySelector('#previewFoto');
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            inputUploadFoto.onchange = function async () {
+                const file = inputUploadFoto.files[0];
+                // validasi gambar, hanyak boleh gambar yang ber ektensi 'jpeg', 'jpg', 'png'
+                if(file.name) {
+                    const allowedExtension = ['jpeg', 'jpg', 'png']
+                    const extensionSplit = file.name.split('.')
+                    const extension = extensionSplit[extensionSplit.length-1]
+                    if(!allowedExtension.includes(extension)) {
+                        alert('Format gambar tidak di izinkan');
+                        inputUploadFoto.value = ''
+                        return
+                    }
+                } else {
+                    alert('Format gambar tidak salah');
+                    inputUploadFoto.value = ''
+                    return
+                }
+                // compress ukuran gambar dengan maximal size 1 mb
+                const options = {
+                    maxSizeMB: 1,
+                    maxWidthOrHeight: 500,
+                    useWebWorker: true
+                }
+                imageCompression(file, options)
+                .then((compressedFile) => {
+                    getBase64(compressedFile).then(
+                        data => {
+                            displayAsImage(data);
+                        }
+                    );
+                }).catch(error => {
+                    alert(error)
+                })
+            };
+            // encode image kedalam base64 sebelum di simpan ke database
+            function getBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = error => reject(error);
+                });
+            }
+            
+            // tampikan image ke preview goto
+            function displayAsImage(file) {
+                previewFoto.style.display = 'block';
+                previewFoto.src = file;
+                previewFoto.addEventListener('load', function (event) {
+                    const dataUrl = getDataUrl(event.currentTarget);
+                    inputFoto.value = dataUrl
+                });
+            }
+            // convert image ke jpeg menggunakan canvas
+            function getDataUrl(img) {
+                // Set width and height
+                canvas.width = img.width;
+                canvas.height = img.height;
+                // Draw the image
+                ctx.drawImage(img, 0, 0);
+                return canvas.toDataURL('image/jpeg');
+            }
+         </script>
+       
+       
+        <script>
+            var waktu = new Date();
+                var tahun = waktu.getFullYear();
+                var bulan = waktu.getMonth();
+                var tgl = waktu.getDate();
+                var hari = waktu.getDay();
+                var jam = waktu.getHours();
+                var menit = waktu.getMinutes();
+                var sekon = waktu.getSeconds();
+                switch(bulan){
+                        case 0:
+                          bulan="JANUARI";
+                          break;
+                        case 1:
+                            bulan="FEBRUARI";
+                            break;
+                        case 2:
+                            bulan="MARET";
+                            break;
+                        case 3:
+                            bulan="APRIL";
+                            break;
+                        case 4:
+                            bulan="MEI";
+                            break;
+                        case 5:
+                            bulan="JUNI";
+                            break;
+                        case 6:
+                            bulan="JULI";
+                            break;
+                        case 7:
+                            bulan="AGUSTUS";
+                            break;
+                        case 8:
+                            bulan="SEPTEMBER";
+                            break;
+                        case 9:
+                            bulan="OKTOBER";
+                            break;
+                        case 10:
+                            bulan="NOPEMBER";
+                            break;
+                        case 11:
+                            bulan="DESEMBER";
+                            break;
+                        default: 
+                       }
+
+                       switch(hari){
+                          case 0:
+                            hari="AHAD";
+                            break;
+                        case 1:
+                            hari="SENIN";
+                            break;
+                        case 2:
+                            hari="SELASA";
+                            break;
+                        case 3:
+                            hari="RABU";
+                            break;
+                        case 4:
+                            hari="KAMIS";
+                            break;
+                        case 5:
+                            hari="JUMAT";
+                            break;
+                        case 6:
+                            hari="SABTU";
+                            break;
+                        default:   
+                        }
+
+                        jam = ("0" + jam).slice(-2);
+                        menit = ("0" + menit).slice(-2);
+                        sekon = ("0" + sekon).slice(-2);
+
+                        dwaktu= " "+hari+", "+tgl+" "+bulan+" "+tahun+" "+jam+":"+menit+":"+sekon+" WIB";
+
+                    document.getElementById("tglwaktuin").innerHTML = dwaktu.toLocaleString();
+      </script>
+        <script>
+            var namaSekolah=document.getElementById("namaSekolah").value;
+            var longitudeSekolah=document.getElementById("longitudeSekolah").value;
+            var latitudeSekolah=document.getElementById("latitudeSekolah").value;
+            var jarakPresensiSekolah=document.getElementById("jarakPresensiSekolah").value;
+            // Setting Akses Token
+            mapboxgl.accessToken = 'pk.eyJ1IjoicG9ob25ncm90aSIsImEiOiJja2xkd29pcnQxZWtnMnVxZTRuZ2FoMGNuIn0.FfqcsxR2VxqPgtj0ZuHtUw';
+            // Inisialisasi Map
+            var map = new mapboxgl.Map({
+            container: 'map',//
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center:[longitudeSekolah,latitudeSekolah],
+            zoom: 15
+            });
+            //Label nama lokasi
+            var popup= new mapboxgl.Popup().setText(namaSekolah).addTo(map);
+            //Penanda lokasi warna biru
+            var marker = new mapboxgl.Marker()
+            .setLngLat([longitudeSekolah,latitudeSekolah])
+            .addTo(map).setPopup(popup);
+            // fungsi geolokasi untuk mengambil lokasi saat ini
+            function getLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(showPosition);
+                } else {
+                    alert("Geolokasi tidak mendukung pada Smartphone Anda atau hidupkan GPS Anda");
+
+                }
+            };
+
+             function showPosition(position) {
+                 //console.log(position.coords.longitude,position.coords.latitude);
+                document.getElementById('longitude').value = position.coords.longitude;
+                document.getElementById('latitude').value = position.coords.latitude;
+                //==================================================================
+                //Tahap-tahap Hitung Rumus Haversine
+                //1. Menjabarkan titik koordinat dalam angka desimal
+                    var lon1=position.coords.longitude;
+                    var lat1=position.coords.latitude;
+                    var lon2=longitudeSekolah;
+                    var lat2=latitudeSekolah;
+                
+                //2. Menjabarkan titik koordinat dalam bilangan radian
+                    var r=0.017453293;
+                    var rlon1=lon1*0.017453293;
+                    var rlat1=lat1*0.017453293;
+                    var rlon2=lon2*0.017453293;
+                    var rlat2=lat2*0.017453293;
+                
+                 //3. Menghitung jarak dengan rumus haversine
+                 //Rumus mencari X
+                    var x=((rlon2)-(rlon1))*(Math.cos(((rlat1)+(rlat2))/2));
+                    var a=((rlon2)-(rlon1));
+                    var b=(Math.cos(((rlat1)+(rlat2))/2));
+                //Rumus mencari Y
+                    var y=((rlat2)-(rlat1));
+                //Rumus mencari Jarak(Distance/d)
+                    var rb=6371;
+                    var jarak=(rb)*(Math.sqrt((x*x)+(y*y)));
+                    var jarakm=(1000)*(rb)*(Math.sqrt((x*x)+(y*y)));
+                //74.78446911404285
+                //==================================================================
+		var from = turf.point([110.9503402,-7.5902476]);
+                var to = turf.point([position.coords.longitude, position.coords.latitude]);
+                var distance = turf.distance(from,to, {units: 'kilometers'});
+                //==================================================================
+                if(jarak<=jarakPresensiSekolah){
+                    //alert("lon1="+lon1+",lat1="+lat1+",rad-lon2="+rlon2+",rad-lon1="+rlon1+",lon2-lon1="+a+", cosnya="+b+", rumus X="+x+", rumus Y="+y+", hasil akhir="+jarak);
+                    alert("Anda bisa presensi dengan jarak="+ jarak +" km, atau "+ jarakm +" m, pada titik koordinat Lintang="+position.coords.longitude+", Dan Bujur="+position.coords.latitude);
+                } else{
+                    alert(jarak+" km, atau "+ jarakm +" m, Anda tidak bisa presensi karena melebihi dari"+jarakPresensiSekolah+" meter, pada titik koordinat Lintang="+position.coords.longitude+", Dan Bujur="+position.coords.latitude);
+                }
+            }; 
+            // listener / fungsi untuk merespon otomatis ketika suatu sudah selesai atau akan di kerjakan
+            document.addEventListener('DOMContentLoaded', function(){
+                getLocation();
+            });
+
+            </script>
+        </body>    
+</html>
